@@ -1,6 +1,5 @@
 services:
   calculator:
-    build: .
     image: calculator-api:latest
     environment:
       - SERVER_PORT=8888

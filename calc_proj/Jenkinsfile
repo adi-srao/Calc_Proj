@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'Java 21' // Ensure this matches your JDK name in Manage Jenkins -> Tools
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,19 +12,11 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test') {
             steps {
                 dir('calc_proj') {
                     sh 'chmod +x mvnw'
-                    sh './mvnw clean package -DskipTests'
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                dir('calc_proj') {
-                    sh './mvnw test'
+                    sh './mvnw clean test package'
                 }
             }
             post {
@@ -41,8 +37,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('calc_proj') {
+                    // Spacing down and restarting containers without redundant re-building
                     sh 'docker compose down'
-                    sh 'docker compose up -d --build'
+                    sh 'docker compose up -d'
                 }
             }
         }
