@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh './mvnw test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t calculator-api:latest .'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'docker compose down'
+                sh 'docker compose up -d --build'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker image prune -f'
+        }
+        success {
+            mail to: 'your-email@domain.com',
+                 subject: "Pipeline Success: ${JOB_NAME} [${BUILD_NUMBER}]",
+                 body: "The build and deployment succeeded for build ${BUILD_NUMBER}."
+        }
+        failure {
+            mail to: 'your-email@domain.com',
+                 subject: "Pipeline Failure: ${JOB_NAME} [${BUILD_NUMBER}]",
+                 body: "The build failed at build ${BUILD_NUMBER}. Please check Jenkins console output."
+        }
+    }
+}
