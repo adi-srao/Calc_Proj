@@ -10,31 +10,40 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                dir('calc_proj') {
+                    sh 'chmod +x mvnw'
+                    sh './mvnw clean package -DskipTests'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh './mvnw test'
+                dir('calc_proj') {
+                    sh './mvnw test'
+                }
             }
             post {
                 always {
-                    junit 'target/surefire-reports/*.xml'
+                    junit 'calc_proj/target/surefire-reports/*.xml'
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t calculator-api:latest .'
+                dir('calc_proj') {
+                    sh 'docker build -t calculator-api:latest .'
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh 'docker compose down'
-                sh 'docker compose up -d --build'
+                dir('calc_proj') {
+                    sh 'docker compose down'
+                    sh 'docker compose up -d --build'
+                }
             }
         }
     }
@@ -44,12 +53,12 @@ pipeline {
             sh 'docker image prune -f'
         }
         success {
-            mail to: 'your-email@domain.com',
+            mail to: 'adityaraosunil@gmail.com',
                  subject: "Pipeline Success: ${JOB_NAME} [${BUILD_NUMBER}]",
                  body: "The build and deployment succeeded for build ${BUILD_NUMBER}."
         }
         failure {
-            mail to: 'your-email@domain.com',
+            mail to: 'adityaraosunil@gmail.com',
                  subject: "Pipeline Failure: ${JOB_NAME} [${BUILD_NUMBER}]",
                  body: "The build failed at build ${BUILD_NUMBER}. Please check Jenkins console output."
         }
